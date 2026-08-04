@@ -20,8 +20,7 @@ const MANUFACTURER = {
   host: 'dapt.iptime.org',
   port: 8885,
   protocol: 'mqtts',
-  rejectUnauthorized: false,
-  topic: '/things/#'
+  rejectUnauthorized: false
 };
 
 const DEFAULT_CONFIG = {
@@ -72,6 +71,7 @@ let config = DEFAULT_CONFIG;
 let manufacturerClient = null;
 let internalClient = null;
 const recentMirrors = new Map();
+const manufacturerSubscriptions = new Set();
 
 function ensureDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
@@ -117,6 +117,23 @@ function ensureCertificate() {
 
 function topicMatchesThings(topic) {
   return topic.startsWith('/things/');
+}
+
+function topicForClient(clientId) {
+  return `/things/${clientId}/#`;
+}
+
+function subscribeManufacturerForClient(clientId) {
+  if (!clientId || !manufacturerClient?.connected) return;
+  const topic = topicForClient(clientId);
+  if (manufacturerSubscriptions.has(topic)) return;
+  manufacturerClient.subscribe(topic, { qos: 0 }, (err) => {
+    if (err) {
+      state.manufacturer.lastError = err.message;
+      return;
+    }
+    manufacturerSubscriptions.add(topic);
+  });
 }
 
 function payloadKey(topic, payload) {
@@ -215,7 +232,8 @@ function connectManufacturer() {
     state.manufacturer.status = 'connected';
     state.manufacturer.lastConnected = new Date().toISOString();
     state.manufacturer.lastError = null;
-    manufacturerClient.subscribe(MANUFACTURER.topic, { qos: 0 });
+    manufacturerSubscriptions.clear();
+    subscribeManufacturerForClient(state.device.clientId);
   });
 
   manufacturerClient.on('message', (topic, payload) => {
@@ -312,6 +330,7 @@ aedes.on('client', (client) => {
   state.device.status = 'connected';
   state.device.clientId = client?.id || null;
   state.device.lastSeen = new Date().toISOString();
+  subscribeManufacturerForClient(state.device.clientId);
 });
 
 aedes.on('clientDisconnect', (client) => {
