@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Purethink Bridge</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header>
+        <div>
+          <h1>Purethink Bridge</h1>
+          <p id="summary">Loading...</p>
+        </div>
+        <button id="refresh" type="button">Refresh</button>
+      </header>
+
+      <section class="status-grid">
+        <article>
+          <h2>Device</h2>
+          <strong id="deviceStatus">-</strong>
+          <dl>
+            <dt>Client ID</dt><dd id="deviceClient">-</dd>
+            <dt>Last Seen</dt><dd id="deviceSeen">-</dd>
+            <dt>Last Topic</dt><dd id="deviceTopic">-</dd>
+            <dt>RX / TX</dt><dd id="deviceCounts">-</dd>
+          </dl>
+        </article>
+
+        <article>
+          <h2>Manufacturer MQTT</h2>
+          <strong id="manufacturerStatus">-</strong>
+          <dl>
+            <dt>Last Connected</dt><dd id="manufacturerConnected">-</dd>
+            <dt>Last Error</dt><dd id="manufacturerError">-</dd>
+            <dt>RX / TX</dt><dd id="manufacturerCounts">-</dd>
+          </dl>
+          <button id="reconnectManufacturer" type="button">Reconnect</button>
+        </article>
+
+        <article>
+          <h2>Internal MQTT</h2>
+          <strong id="internalStatus">-</strong>
+          <dl>
+            <dt>Host</dt><dd id="internalHost">-</dd>
+            <dt>Last Connected</dt><dd id="internalConnected">-</dd>
+            <dt>Last Error</dt><dd id="internalError">-</dd>
+            <dt>RX / TX</dt><dd id="internalCounts">-</dd>
+          </dl>
+          <button id="reconnectInternal" type="button">Reconnect</button>
+        </article>
+
+        <article>
+          <h2>Bridge</h2>
+          <strong id="localControl">-</strong>
+          <dl>
+            <dt>Started</dt><dd id="startedAt">-</dd>
+            <dt>Dropped Loops</dt><dd id="droppedLoops">-</dd>
+            <dt>Last Error</dt><dd id="bridgeError">-</dd>
+          </dl>
+        </article>
+      </section>
+
+      <section class="settings">
+        <h2>Internal MQTT Settings</h2>
+        <form id="configForm">
+          <label>
+            <span>Enabled</span>
+            <input id="enabled" type="checkbox">
+          </label>
+          <label>
+            <span>Host</span>
+            <input id="host" name="host" placeholder="192.168.0.4">
+          </label>
+          <label>
+            <span>Port</span>
+            <input id="port" name="port" type="number" min="1" max="65535" value="1883">
+          </label>
+          <label>
+            <span>Username</span>
+            <input id="username" name="username" autocomplete="username">
+          </label>
+          <label>
+            <span>Password</span>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="unchanged">
+          </label>
+          <label>
+            <span>Client ID</span>
+            <input id="clientId" name="clientId" value="purethink-bridge">
+          </label>
+          <label>
+            <span>Subscribe Topic</span>
+            <input id="topic" name="topic" value="/things/#">
+          </label>
+          <label>
+            <span>Mirror Manufacturer To Internal</span>
+            <input id="mirrorManufacturerToInternal" type="checkbox">
+          </label>
+          <button type="submit">Save</button>
+        </form>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

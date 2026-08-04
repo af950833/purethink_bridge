@@ -1,0 +1,16 @@
+{
+  "name": "purethink-bridge",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Purethink local MQTT bridge",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "aedes": "^0.51.3",
+    "express": "^4.19.2",
+    "mqtt": "^5.10.1",
+    "selfsigned": "^2.4.1"
+  }
+}

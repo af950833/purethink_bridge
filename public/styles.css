@@ -1,0 +1,158 @@
+:root {
+  color-scheme: light dark;
+  font-family: Arial, sans-serif;
+  background: #f5f7f8;
+  color: #1c2427;
+}
+
+body {
+  margin: 0;
+}
+
+.shell {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 28px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+h1, h2, p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 28px;
+}
+
+h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  background: #1f6f78;
+  color: white;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #185a62;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+article, .settings {
+  background: white;
+  border: 1px solid #dde5e7;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+strong {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #eef2f3;
+  color: #334044;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  font-size: 12px;
+}
+
+strong.connected {
+  background: #dff3e8;
+  color: #116234;
+}
+
+strong.reconnecting {
+  background: #fff0cf;
+  color: #7a5200;
+}
+
+strong.offline, strong.misconfigured {
+  background: #ffe1df;
+  color: #8b1d16;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: 105px minmax(0, 1fr);
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 13px;
+}
+
+dt {
+  color: #5d6b70;
+}
+
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.settings {
+  margin-top: 16px;
+}
+
+form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  color: #526167;
+}
+
+input {
+  min-width: 0;
+  border: 1px solid #cbd6d9;
+  border-radius: 6px;
+  padding: 9px 10px;
+  font: inherit;
+}
+
+input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+@media (max-width: 920px) {
+  .status-grid, form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .shell {
+    padding: 16px;
+  }
+
+  header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .status-grid, form {
+    grid-template-columns: 1fr;
+  }
+}
