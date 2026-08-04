@@ -1,6 +1,6 @@
 # Purethink Bridge
 
-Purethink/PureSync 환기장치를 로컬망에서 안정적으로 사용하기 위한 MQTT 브릿지 서버입니다.
+Purethink 환기장치를 로컬망에서 안정적으로 사용하기 위한 MQTT 브릿지 서버입니다.
 
 제조사 MQTT 서버가 동작할 때는 기존 앱 사용성을 유지하고, 제조사 서버가 죽어도 Home Assistant와 내부 MQTT를 통해 로컬 제어가 가능하도록 만드는 구성을 목표로 합니다.
 
