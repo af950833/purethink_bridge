@@ -42,7 +42,7 @@ Purethink 기기
 - Home Assistant
 - 내부 MQTT 서버, 예: Mosquitto `1883`
 - Purethink 기기의 IP 주소
-- Purethink 기기의 device id, 예: `DIV01-0764A2`
+- Purethink 기기의 device id, 예: `DIV01-ABCDEF`
 - Purethink 기기 펌웨어 `ver.220706.1630_DIV01.bin`
 - 공유기에서 iptables DNAT 설정 가능
 
@@ -64,6 +64,16 @@ Ubuntu 서버 IP: 192.168.0.4
 ```text
 http://dapt.iptime.org:6002/firmware/ver.220706.1630_DIV01.bin
 ```
+
+다른 모델/라인업 펌웨어도 아래 경로에서 다운로드 가능한 경우가 있습니다.
+
+```text
+http://dapt.iptime.org:6002/firmware/ver.220706.1630_THESOOP.bin
+http://dapt.iptime.org:6002/firmware/ver.211231.1400_DIV02.bin
+http://dapt.iptime.org:6002/firmware/ver.220307.1130_AC01.bin
+```
+
+단, 이 문서의 패치 위치와 스크립트는 `ver.220706.1630_DIV01.bin`에서만 검증되었습니다. `THESOOP`, `DIV02`, `AC01` 펌웨어에는 그대로 적용하지 마세요. 해당 모델은 사용자가 직접 디스어셈블/분석해서 인증서 검증 루틴, 버전 문자열, checksum 위치를 확인한 뒤 별도 패치해야 합니다.
 
 Ubuntu 서버나 작업 PC에서 다운로드합니다.
 
@@ -174,6 +184,22 @@ python3 patch_purethink_fw.py
 파일명: ver.220706.1633_DIV01.bin
 크기: 509952 bytes
 SHA256: 9c20bd2d5b113ea38b2fcac483ec7b5a08ff9bf0f494338a1f6ea1134769f343
+```
+
+이미 검증된 `ver.220706.1633_DIV01.bin` 파일을 보관하고 있다면 패치 스크립트를 다시 실행하지 않아도 됩니다. 직접 해당 파일을 다운로드하거나 복사해서 OTA 서버의 `firmware/` 폴더에 넣으면 됩니다.
+
+```bash
+mkdir -p ~/purethink-ota/firmware
+cp ver.220706.1633_DIV01.bin ~/purethink-ota/firmware/
+```
+
+본인이 배포 권한을 가진 범위에서 GitHub Release 또는 개인 저장소에 `ver.220706.1633_DIV01.bin`을 보관해 두었다면, 아래처럼 직접 내려받아 사용할 수도 있습니다.
+
+```bash
+mkdir -p ~/purethink-ota/firmware
+curl -L \
+  -o ~/purethink-ota/firmware/ver.220706.1633_DIV01.bin \
+  '<ver.220706.1633_DIV01.bin 다운로드 URL>'
 ```
 
 ## 3. OTA 서버 준비
