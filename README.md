@@ -331,23 +331,21 @@ nslookup dapt.iptime.org
 
 예시에서는 `221.149.135.231`을 사용합니다.
 
-공유기 SSH에서 실행합니다.
+공유기 SSH에서 아래 명령을 그대로 실행합니다.
 
 ```bash
-DAPT=221.149.135.231
-OTA_SERVER=192.168.0.4
+iptables -t nat -I PREROUTING 1 ! -s 192.168.0.4 -d 221.149.135.231 -p tcp --dport 6002 -j DNAT --to-destination 192.168.0.4:6002
 
-iptables -t nat -I PREROUTING 1 \
-  ! -s $OTA_SERVER -d $DAPT \
-  -p tcp --dport 6002 \
-  -j DNAT --to-destination $OTA_SERVER:6002
+iptables -t nat -I POSTROUTING 1 ! -s 192.168.0.4 -d 192.168.0.4 -p tcp --dport 6002 -j MASQUERADE
 
-iptables -t nat -I POSTROUTING 1 \
-  ! -s $OTA_SERVER -d $OTA_SERVER \
-  -p tcp --dport 6002 \
-  -j MASQUERADE
+conntrack -D -d 221.149.135.231 -p tcp --dport 6002 2>/dev/null || true
+```
 
-conntrack -D -d $DAPT -p tcp --dport 6002 2>/dev/null || true
+규칙이 정상적으로 추가되었는지 확인합니다.
+
+```bash
+iptables -t nat -L PREROUTING --line-numbers -n -v
+iptables -t nat -L POSTROUTING --line-numbers -n -v
 ```
 
 앱에서 펌웨어 업데이트를 실행합니다.
@@ -358,21 +356,21 @@ conntrack -D -d $DAPT -p tcp --dport 6002 2>/dev/null || true
 
 펌웨어 업데이트가 끝나면 반드시 `6002` DNAT를 제거합니다.
 
+공유기 SSH에서 아래 명령을 그대로 실행합니다.
+
 ```bash
-DAPT=221.149.135.231
-OTA_SERVER=192.168.0.4
+iptables -t nat -D PREROUTING ! -s 192.168.0.4 -d 221.149.135.231 -p tcp --dport 6002 -j DNAT --to-destination 192.168.0.4:6002 2>/dev/null || true
 
-iptables -t nat -D PREROUTING \
-  ! -s $OTA_SERVER -d $DAPT \
-  -p tcp --dport 6002 \
-  -j DNAT --to-destination $OTA_SERVER:6002 2>/dev/null || true
+iptables -t nat -D POSTROUTING ! -s 192.168.0.4 -d 192.168.0.4 -p tcp --dport 6002 -j MASQUERADE 2>/dev/null || true
 
-iptables -t nat -D POSTROUTING \
-  ! -s $OTA_SERVER -d $OTA_SERVER \
-  -p tcp --dport 6002 \
-  -j MASQUERADE 2>/dev/null || true
+conntrack -D -d 221.149.135.231 -p tcp --dport 6002 2>/dev/null || true
+```
 
-conntrack -D -d $DAPT -p tcp --dport 6002 2>/dev/null || true
+규칙이 삭제되었는지 확인합니다.
+
+```bash
+iptables -t nat -L PREROUTING --line-numbers -n -v
+iptables -t nat -L POSTROUTING --line-numbers -n -v
 ```
 
 OTA 서버도 종료합니다.
@@ -491,24 +489,21 @@ Device: offline
 
 이제 기기의 제조사 MQTT 접속을 브릿지 서버로 DNAT합니다.
 
-공유기 SSH에서 실행합니다.
+공유기 SSH에서 아래 명령을 그대로 실행합니다.
 
 ```bash
-DAPT=221.149.135.231
-DEVICE=192.168.0.67
-BRIDGE=192.168.0.4
+iptables -t nat -I PREROUTING 1 -s 192.168.0.67 -d 221.149.135.231 -p tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885
 
-iptables -t nat -I PREROUTING 1 \
-  -s $DEVICE -d $DAPT \
-  -p tcp --dport 8885 \
-  -j DNAT --to-destination $BRIDGE:8885
+iptables -t nat -I POSTROUTING 1 -s 192.168.0.67 -d 192.168.0.4 -p tcp --dport 8885 -j MASQUERADE
 
-iptables -t nat -I POSTROUTING 1 \
-  -s $DEVICE -d $BRIDGE \
-  -p tcp --dport 8885 \
-  -j MASQUERADE
+conntrack -D -s 192.168.0.67 -d 221.149.135.231 -p tcp --dport 8885 2>/dev/null || true
+```
 
-conntrack -D -s $DEVICE -d $DAPT -p tcp --dport 8885 2>/dev/null || true
+규칙이 정상적으로 추가되었는지 확인합니다.
+
+```bash
+iptables -t nat -L PREROUTING --line-numbers -n -v
+iptables -t nat -L POSTROUTING --line-numbers -n -v
 ```
 
 대시보드에서 확인합니다.
@@ -525,22 +520,21 @@ payload stream에 `/things/<device-id>/shadow` 메시지가 표시되면 정상�
 
 브릿지 테스트를 중단하거나 제조사 서버 직접 연결로 되돌리고 싶으면 `8885` DNAT를 제거합니다.
 
+공유기 SSH에서 아래 명령을 그대로 실행합니다.
+
 ```bash
-DAPT=221.149.135.231
-DEVICE=192.168.0.67
-BRIDGE=192.168.0.4
+iptables -t nat -D PREROUTING -s 192.168.0.67 -d 221.149.135.231 -p tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885 2>/dev/null || true
 
-iptables -t nat -D PREROUTING \
-  -s $DEVICE -d $DAPT \
-  -p tcp --dport 8885 \
-  -j DNAT --to-destination $BRIDGE:8885 2>/dev/null || true
+iptables -t nat -D POSTROUTING -s 192.168.0.67 -d 192.168.0.4 -p tcp --dport 8885 -j MASQUERADE 2>/dev/null || true
 
-iptables -t nat -D POSTROUTING \
-  -s $DEVICE -d $BRIDGE \
-  -p tcp --dport 8885 \
-  -j MASQUERADE 2>/dev/null || true
+conntrack -D -s 192.168.0.67 -p tcp --dport 8885 2>/dev/null || true
+```
 
-conntrack -D -s $DEVICE -p tcp --dport 8885 2>/dev/null || true
+규칙이 삭제되었는지 확인합니다.
+
+```bash
+iptables -t nat -L PREROUTING --line-numbers -n -v
+iptables -t nat -L POSTROUTING --line-numbers -n -v
 ```
 
 기기가 제조사 서버로 다시 붙었는지 확인합니다.
