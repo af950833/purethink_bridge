@@ -51,7 +51,7 @@ Purethink 기기
 ```text
 Ubuntu 서버 IP: 192.168.0.4
 기기 IP: 192.168.0.67
-제조사 MQTT IP: 221.149.135.231
+제조사 MQTT IP: 221.149.135.231(CMD창에서 ping dapt.iptime.org 로 확인)
 브릿지 MQTT 포트: 8885
 브릿지 대시보드 포트: 33301
 내부 MQTT 포트: 1883
