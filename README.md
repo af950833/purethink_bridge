@@ -492,18 +492,15 @@ Device: offline
 공유기 SSH에서 아래 명령을 그대로 실행합니다.
 
 ```bash
-iptables -t nat -I PREROUTING 1 -s 192.168.0.67 -d 221.149.135.231 -p tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885
+iptables -t nat -I PREROUTING 1 -s 192.168.0.67 -p tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885
 
-iptables -t nat -I POSTROUTING 1 -s 192.168.0.67 -d 192.168.0.4 -p tcp --dport 8885 -j MASQUERADE
-
-conntrack -D -s 192.168.0.67 -d 221.149.135.231 -p tcp --dport 8885 2>/dev/null || true
+conntrack -D -s 192.168.0.67 -p tcp --dport 8885
 ```
 
 규칙이 정상적으로 추가되었는지 확인합니다.
 
 ```bash
 iptables -t nat -L PREROUTING --line-numbers -n -v
-iptables -t nat -L POSTROUTING --line-numbers -n -v
 ```
 
 대시보드에서 확인합니다.
@@ -523,18 +520,15 @@ payload stream에 `/things/<device-id>/shadow` 메시지가 표시되면 정상�
 공유기 SSH에서 아래 명령을 그대로 실행합니다.
 
 ```bash
-iptables -t nat -D PREROUTING -s 192.168.0.67 -d 221.149.135.231 -p tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885 2>/dev/null || true
+iptables -t nat -D PREROUTING -s 192.168.0.67 -p tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885
 
-iptables -t nat -D POSTROUTING -s 192.168.0.67 -d 192.168.0.4 -p tcp --dport 8885 -j MASQUERADE 2>/dev/null || true
-
-conntrack -D -s 192.168.0.67 -p tcp --dport 8885 2>/dev/null || true
+conntrack -D -s 192.168.0.67 -p tcp --dport 8885
 ```
 
 규칙이 삭제되었는지 확인합니다.
 
 ```bash
 iptables -t nat -L PREROUTING --line-numbers -n -v
-iptables -t nat -L POSTROUTING --line-numbers -n -v
 ```
 
 기기가 제조사 서버로 다시 붙었는지 확인합니다.
