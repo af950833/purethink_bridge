@@ -557,7 +557,7 @@ Device ID: DIV01-xxxx
 브릿지는 내부 MQTT에 기존 제조사 토픽과 같은 형태로 publish합니다.
 
 ```text
-/things/DIV01-xxxx/shadow
+/things/DIV01-xxxxxx/shadow
 ```
 
 따라서 Home Assistant 컴포넌트는 제조사 MQTT 대신 내부 MQTT만 바라보면 됩니다.
