@@ -55,7 +55,7 @@ button:hover {
   gap: 14px;
 }
 
-article, .settings {
+article, .settings, .payloads {
   background: white;
   border: 1px solid #dde5e7;
   border-radius: 8px;
@@ -107,6 +107,70 @@ dd {
 
 .settings {
   margin-top: 16px;
+}
+
+.payloads {
+  margin-top: 16px;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.payload-stream {
+  height: 420px;
+  overflow: auto;
+  border: 1px solid #d5dee1;
+  border-radius: 6px;
+  background: #101619;
+  color: #d8ecec;
+  font-family: Consolas, Monaco, monospace;
+  font-size: 12px;
+}
+
+.payload-row {
+  border-bottom: 1px solid #243236;
+  padding: 10px;
+}
+
+.payload-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #94aeb5;
+  margin-bottom: 6px;
+}
+
+.payload-meta b {
+  color: #f3f7f8;
+}
+
+.payload-meta b.from-device {
+  color: #8bd17c;
+}
+
+.payload-meta b.to-device {
+  color: #7db9ff;
+}
+
+.payload-meta b.from-internal,
+.payload-meta b.to-internal {
+  color: #ffd166;
+}
+
+.payload-meta b.from-manufacturer,
+.payload-meta b.to-manufacturer {
+  color: #ef9a9a;
+}
+
+pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 form {

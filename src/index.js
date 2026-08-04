@@ -33,9 +33,6 @@ const DEFAULT_CONFIG = {
     password: '',
     clientId: 'purethink-bridge',
     topic: '/things/#'
-  },
-  relay: {
-    mirrorManufacturerToInternal: true
   }
 };
 
@@ -65,7 +62,9 @@ const state = {
   },
   bridge: {
     droppedLoopMessages: 0,
-    lastError: null
+    lastError: null,
+    messageSeq: 0,
+    messages: []
   }
 };
 
@@ -87,8 +86,7 @@ function loadConfig() {
   return {
     ...DEFAULT_CONFIG,
     ...loaded,
-    internalMqtt: { ...DEFAULT_CONFIG.internalMqtt, ...(loaded.internalMqtt || {}) },
-    relay: { ...DEFAULT_CONFIG.relay, ...(loaded.relay || {}) }
+    internalMqtt: { ...DEFAULT_CONFIG.internalMqtt, ...(loaded.internalMqtt || {}) }
   };
 }
 
@@ -125,6 +123,26 @@ function payloadKey(topic, payload) {
   return `${topic}\n${Buffer.from(payload).toString('base64')}`;
 }
 
+function payloadText(payload) {
+  const text = Buffer.from(payload).toString('utf8');
+  return text.length > 1000 ? `${text.slice(0, 1000)}...` : text;
+}
+
+function recordMessage(direction, topic, payload) {
+  state.bridge.messageSeq += 1;
+  state.bridge.messages.push({
+    id: state.bridge.messageSeq,
+    at: new Date().toISOString(),
+    direction,
+    topic,
+    bytes: Buffer.byteLength(payload),
+    payload: payloadText(payload)
+  });
+  if (state.bridge.messages.length > 200) {
+    state.bridge.messages.splice(0, state.bridge.messages.length - 200);
+  }
+}
+
 function rememberMirror(target, topic, payload) {
   const key = `${target}:${payloadKey(topic, payload)}`;
   recentMirrors.set(key, Date.now());
@@ -140,6 +158,7 @@ function wasMirroredTo(target, topic, payload) {
 }
 
 function publishToDevice(topic, payload) {
+  recordMessage('to-device', topic, payload);
   aedes.publish({ topic, payload, qos: 0, retain: false }, (err) => {
     if (err) {
       state.bridge.lastError = `device publish failed: ${err.message}`;
@@ -151,6 +170,7 @@ function publishToDevice(topic, payload) {
 
 function publishToManufacturer(topic, payload) {
   if (!manufacturerClient?.connected) return;
+  recordMessage('to-manufacturer', topic, payload);
   rememberMirror('manufacturer', topic, payload);
   manufacturerClient.publish(topic, payload, { qos: 0, retain: false }, (err) => {
     if (err) {
@@ -163,6 +183,7 @@ function publishToManufacturer(topic, payload) {
 
 function publishToInternal(topic, payload) {
   if (!internalClient?.connected) return;
+  recordMessage('to-internal', topic, payload);
   rememberMirror('internal', topic, payload);
   internalClient.publish(topic, payload, { qos: 0, retain: false }, (err) => {
     if (err) {
@@ -201,10 +222,8 @@ function connectManufacturer() {
     if (!topicMatchesThings(topic)) return;
     if (wasMirroredTo('manufacturer', topic, payload)) return;
     state.manufacturer.rx += 1;
+    recordMessage('from-manufacturer', topic, payload);
     publishToDevice(topic, payload);
-    if (config.relay.mirrorManufacturerToInternal) {
-      publishToInternal(topic, payload);
-    }
   });
 
   manufacturerClient.on('reconnect', () => {
@@ -266,6 +285,7 @@ function connectInternal() {
     if (!topicMatchesThings(topic)) return;
     if (wasMirroredTo('internal', topic, payload)) return;
     state.internal.rx += 1;
+    recordMessage('from-internal', topic, payload);
     publishToDevice(topic, payload);
   });
 
@@ -309,6 +329,7 @@ aedes.on('publish', (packet, client) => {
   state.device.lastSeen = new Date().toISOString();
   state.device.lastTopic = packet.topic;
   state.device.rx += 1;
+  recordMessage('from-device', packet.topic, packet.payload);
   publishToManufacturer(packet.topic, packet.payload);
   publishToInternal(packet.topic, packet.payload);
 });
@@ -333,8 +354,7 @@ app.get('/api/status', (_req, res) => {
       internalMqtt: {
         ...config.internalMqtt,
         password: config.internalMqtt.password ? '********' : ''
-      },
-      relay: config.relay
+      }
     }
   });
 });
@@ -355,10 +375,6 @@ app.post('/api/config', (req, res) => {
     internalMqtt: {
       ...config.internalMqtt,
       ...(req.body.internalMqtt || {})
-    },
-    relay: {
-      ...config.relay,
-      ...(req.body.relay || {})
     }
   };
   if (!req.body.internalMqtt?.password && config.internalMqtt.password) {

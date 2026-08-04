@@ -55,7 +55,6 @@ Runtime data is stored under `/data`:
 Device -> Bridge -> Manufacturer MQTT
 Device -> Bridge -> Internal MQTT
 Manufacturer MQTT -> Bridge -> Device
-Manufacturer MQTT -> Bridge -> Internal MQTT
 Internal MQTT -> Bridge -> Device
 ```
 

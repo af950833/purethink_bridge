@@ -93,12 +93,16 @@
             <span>Subscribe Topic</span>
             <input id="topic" name="topic" value="/things/#">
           </label>
-          <label>
-            <span>Mirror Manufacturer To Internal</span>
-            <input id="mirrorManufacturerToInternal" type="checkbox">
-          </label>
           <button type="submit">Save</button>
         </form>
+      </section>
+
+      <section class="payloads">
+        <div class="section-title">
+          <h2>Payload Stream</h2>
+          <button id="clearPayloads" type="button">Clear View</button>
+        </div>
+        <div id="payloadStream" class="payload-stream"></div>
       </section>
     </main>
     <script src="/app.js"></script>

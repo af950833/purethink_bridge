@@ -1,4 +1,5 @@
 const $ = (id) => document.getElementById(id);
+let hiddenUntilMessageId = 0;
 
 function setStatus(id, value) {
   const el = $(id);
@@ -12,6 +13,36 @@ function setText(id, value) {
 
 function counts(obj) {
   return `${obj.rx || 0} / ${obj.tx || 0}`;
+}
+
+function escapeText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[char]);
+}
+
+function renderMessages(messages) {
+  const stream = $('payloadStream');
+  const shouldScroll = stream.scrollTop + stream.clientHeight >= stream.scrollHeight - 20;
+  const visible = messages.filter((message) => message.id > hiddenUntilMessageId);
+  stream.innerHTML = visible.map((message) => `
+    <div class="payload-row">
+      <div class="payload-meta">
+        <span>${escapeText(message.at)}</span>
+        <b class="${escapeText(message.direction)}">${escapeText(message.direction)}</b>
+        <span>${escapeText(message.topic)}</span>
+        <span>${message.bytes || 0} bytes</span>
+      </div>
+      <pre>${escapeText(message.payload)}</pre>
+    </div>
+  `).join('');
+  if (shouldScroll) {
+    stream.scrollTop = stream.scrollHeight;
+  }
 }
 
 async function loadStatus() {
@@ -42,6 +73,7 @@ async function loadStatus() {
   setText('startedAt', state.startedAt);
   setText('droppedLoops', String(state.bridge.droppedLoopMessages || 0));
   setText('bridgeError', state.bridge.lastError);
+  renderMessages(state.bridge.messages || []);
 }
 
 async function loadConfig() {
@@ -54,7 +86,6 @@ async function loadConfig() {
   $('password').value = '';
   $('clientId').value = cfg.internalMqtt.clientId || 'purethink-bridge';
   $('topic').value = cfg.internalMqtt.topic || '/things/#';
-  $('mirrorManufacturerToInternal').checked = Boolean(cfg.relay.mirrorManufacturerToInternal);
 }
 
 async function saveConfig(event) {
@@ -69,9 +100,6 @@ async function saveConfig(event) {
       clientId: $('clientId').value.trim() || 'purethink-bridge',
       topic: $('topic').value.trim() || '/things/#'
     },
-    relay: {
-      mirrorManufacturerToInternal: $('mirrorManufacturerToInternal').checked
-    }
   };
   await fetch('/api/config', {
     method: 'POST',
@@ -90,6 +118,13 @@ $('refresh').addEventListener('click', loadStatus);
 $('configForm').addEventListener('submit', saveConfig);
 $('reconnectManufacturer').addEventListener('click', () => post('/api/reconnect/manufacturer'));
 $('reconnectInternal').addEventListener('click', () => post('/api/reconnect/internal'));
+$('clearPayloads').addEventListener('click', async () => {
+  const res = await fetch('/api/status');
+  const data = await res.json();
+  const messages = data.state.bridge.messages || [];
+  hiddenUntilMessageId = messages.at(-1)?.id || 0;
+  renderMessages([]);
+});
 
 loadConfig().then(loadStatus);
 setInterval(loadStatus, 3000);
