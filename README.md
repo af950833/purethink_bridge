@@ -441,7 +441,7 @@ http://<Ubuntu 서버 IP>:33301
 http://192.168.0.4:33301
 ```
 
-## 7. Docker pull 방식
+## 7. Docker pull 방식(현재는 사용 불가)
 
 현재 이 저장소는 소스에서 직접 Docker build하는 방식을 기본으로 합니다.
 
