@@ -15,7 +15,7 @@ docker run -d \
   --name purethink-bridge \
   --restart unless-stopped \
   -p 8885:8885 \
-  -p 8080:8080 \
+  -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
   purethink-bridge:latest
 ```
@@ -23,7 +23,7 @@ docker run -d \
 Open the dashboard:
 
 ```text
-http://<server-ip>:8080
+http://<server-ip>:33301
 ```
 
 ## Router DNAT

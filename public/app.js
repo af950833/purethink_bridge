@@ -27,8 +27,10 @@ function escapeText(value) {
 
 function renderMessages(messages) {
   const stream = $('payloadStream');
-  const shouldScroll = stream.scrollTop + stream.clientHeight >= stream.scrollHeight - 20;
-  const visible = messages.filter((message) => message.id > hiddenUntilMessageId);
+  const visible = messages
+    .filter((message) => message.id > hiddenUntilMessageId)
+    .slice()
+    .reverse();
   stream.innerHTML = visible.map((message) => `
     <div class="payload-row">
       <div class="payload-meta">
@@ -40,9 +42,7 @@ function renderMessages(messages) {
       <pre>${escapeText(message.payload)}</pre>
     </div>
   `).join('');
-  if (shouldScroll) {
-    stream.scrollTop = stream.scrollHeight;
-  }
+  stream.scrollTop = 0;
 }
 
 async function loadStatus() {

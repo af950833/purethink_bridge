@@ -11,7 +11,7 @@ import selfsigned from 'selfsigned';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
-const HTTP_PORT = Number(process.env.HTTP_PORT || 8080);
+const HTTP_PORT = Number(process.env.HTTP_PORT || 33301);
 const DEVICE_MQTT_PORT = Number(process.env.DEVICE_MQTT_PORT || 8885);
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const CERT_DIR = path.join(DATA_DIR, 'certs');
