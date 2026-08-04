@@ -319,6 +319,8 @@ curl -s http://127.0.0.1:6002/version/combined
 curl -I http://127.0.0.1:6002/firmware/ver.220706.1633_DIV01.bin
 ```
 
+퓨어싱크 앱을 실행하여 기기 선택 후 설정 화면까지 들어갑니다.
+
 ## 4. OTA용 공유기 DNAT
 
 앱과 기기가 제조사 OTA 서버 대신 로컬 OTA 서버를 보게 하려면 공유기에서 `6002`를 잠시 DNAT합니다.
@@ -348,7 +350,7 @@ iptables -t nat -L PREROUTING --line-numbers -n -v
 iptables -t nat -L POSTROUTING --line-numbers -n -v
 ```
 
-앱에서 펌웨어 업데이트를 실행합니다.
+앱에서 버전 정보로 들어가서 펌웨어 업데이트를 실행합니다.
 
 업데이트가 끝나면 기기 현재 버전이 `1633`으로 보이는지 확인합니다. 앱에서 실패로 표시되더라도 기기가 실제로 업데이트되는 경우가 있으므로, 앱의 현재 버전 표시를 확인하세요.
 
