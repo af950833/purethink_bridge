@@ -47,6 +47,7 @@ const state = {
   },
   manufacturer: {
     status: 'offline',
+    host: `${MANUFACTURER.host}:${MANUFACTURER.port}`,
     lastConnected: null,
     lastError: null,
     rx: 0,
