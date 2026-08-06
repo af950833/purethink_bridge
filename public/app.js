@@ -59,6 +59,7 @@ async function loadStatus() {
   setText('deviceCounts', counts(state.device));
 
   setStatus('manufacturerStatus', state.manufacturer.status);
+  setText('manufacturerHost', state.manufacturer.host || '-');
   setText('manufacturerConnected', state.manufacturer.lastConnected);
   setText('manufacturerError', state.manufacturer.lastError);
   setText('manufacturerCounts', counts(state.manufacturer));
