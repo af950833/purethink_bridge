@@ -15,6 +15,7 @@ const HTTP_PORT = Number(process.env.HTTP_PORT || 33301);
 const DEVICE_MQTT_PORT = Number(process.env.DEVICE_MQTT_PORT || 8885);
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const CERT_DIR = path.join(DATA_DIR, 'certs');
+const DISPLAY_TIME_ZONE = process.env.TZ || 'Asia/Seoul';
 
 const MANUFACTURER = {
   host: 'dapt.iptime.org',
@@ -35,8 +36,23 @@ const DEFAULT_CONFIG = {
   }
 };
 
+function displayTime(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('ko-KR', {
+    timeZone: DISPLAY_TIME_ZONE,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  }).formatToParts(date);
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return `${value.year}년 ${Number(value.month)}월 ${Number(value.day)}일\n${value.hour}:${value.minute}:${value.second}`;
+}
+
 const state = {
-  startedAt: new Date().toISOString(),
+  startedAt: displayTime(),
   device: {
     status: 'offline',
     clientId: null,
@@ -150,7 +166,7 @@ function recordMessage(direction, topic, payload) {
   state.bridge.messageSeq += 1;
   state.bridge.messages.push({
     id: state.bridge.messageSeq,
-    at: new Date().toISOString(),
+    at: displayTime(),
     direction,
     topic,
     bytes: Buffer.byteLength(payload),
@@ -231,7 +247,7 @@ function connectManufacturer() {
 
   manufacturerClient.on('connect', () => {
     state.manufacturer.status = 'connected';
-    state.manufacturer.lastConnected = new Date().toISOString();
+    state.manufacturer.lastConnected = displayTime();
     state.manufacturer.lastError = null;
     manufacturerSubscriptions.clear();
     subscribeManufacturerForClient(state.device.clientId);
@@ -295,7 +311,7 @@ function connectInternal() {
 
   internalClient.on('connect', () => {
     state.internal.status = 'connected';
-    state.internal.lastConnected = new Date().toISOString();
+    state.internal.lastConnected = displayTime();
     state.internal.lastError = null;
     internalClient.subscribe(config.internalMqtt.topic || '/things/#', { qos: 0 });
   });
@@ -330,14 +346,14 @@ const aedes = new Aedes();
 aedes.on('client', (client) => {
   state.device.status = 'connected';
   state.device.clientId = client?.id || null;
-  state.device.lastSeen = new Date().toISOString();
+  state.device.lastSeen = displayTime();
   subscribeManufacturerForClient(state.device.clientId);
 });
 
 aedes.on('clientDisconnect', (client) => {
   if (state.device.clientId === client?.id) {
     state.device.status = 'offline';
-    state.device.lastSeen = new Date().toISOString();
+    state.device.lastSeen = displayTime();
   }
 });
 
@@ -346,7 +362,7 @@ aedes.on('publish', (packet, client) => {
   if (!topicMatchesThings(packet.topic)) return;
   state.device.status = 'connected';
   state.device.clientId = client.id;
-  state.device.lastSeen = new Date().toISOString();
+  state.device.lastSeen = displayTime();
   state.device.lastTopic = packet.topic;
   state.device.rx += 1;
   recordMessage('from-device', packet.topic, packet.payload);

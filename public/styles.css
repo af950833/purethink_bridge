@@ -105,6 +105,10 @@ dd {
   overflow-wrap: anywhere;
 }
 
+.time {
+  white-space: pre-line;
+}
+
 .settings {
   margin-top: 16px;
 }

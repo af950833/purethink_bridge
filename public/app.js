@@ -11,6 +11,12 @@ function setText(id, value) {
   $(id).textContent = value || '-';
 }
 
+function setTime(id, value) {
+  const el = $(id);
+  el.textContent = value || '-';
+  el.classList.add('time');
+}
+
 function counts(obj) {
   return `${obj.rx || 0} / ${obj.tx || 0}`;
 }
@@ -34,7 +40,7 @@ function renderMessages(messages) {
   stream.innerHTML = visible.map((message) => `
     <div class="payload-row">
       <div class="payload-meta">
-        <span>${escapeText(message.at)}</span>
+        <span class="time">${escapeText(message.at)}</span>
         <b class="${escapeText(message.direction)}">${escapeText(message.direction)}</b>
         <span>${escapeText(message.topic)}</span>
         <span>${message.bytes || 0} bytes</span>
@@ -54,24 +60,24 @@ async function loadStatus() {
 
   setStatus('deviceStatus', state.device.status);
   setText('deviceClient', state.device.clientId);
-  setText('deviceSeen', state.device.lastSeen);
+  setTime('deviceSeen', state.device.lastSeen);
   setText('deviceTopic', state.device.lastTopic);
   setText('deviceCounts', counts(state.device));
 
   setStatus('manufacturerStatus', state.manufacturer.status);
   setText('manufacturerHost', state.manufacturer.host || '-');
-  setText('manufacturerConnected', state.manufacturer.lastConnected);
+  setTime('manufacturerConnected', state.manufacturer.lastConnected);
   setText('manufacturerError', state.manufacturer.lastError);
   setText('manufacturerCounts', counts(state.manufacturer));
 
   setStatus('internalStatus', state.internal.status);
   setText('internalHost', config.internalMqtt.host ? `${config.internalMqtt.host}:${config.internalMqtt.port}` : '-');
-  setText('internalConnected', state.internal.lastConnected);
+  setTime('internalConnected', state.internal.lastConnected);
   setText('internalError', state.internal.lastError);
   setText('internalCounts', counts(state.internal));
 
   setStatus('localControl', state.device.status === 'connected' && state.internal.status === 'connected' ? 'available' : 'limited');
-  setText('startedAt', state.startedAt);
+  setTime('startedAt', state.startedAt);
   setText('droppedLoops', String(state.bridge.droppedLoopMessages || 0));
   setText('bridgeError', state.bridge.lastError);
   renderMessages(state.bridge.messages || []);
