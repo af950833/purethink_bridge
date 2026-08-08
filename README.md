@@ -416,6 +416,7 @@ docker rm -f purethink_bridge 2>/dev/null || true
 docker run -d \
   --name purethink_bridge \
   --restart unless-stopped \
+  -e TZ=Asia/Seoul \
   -p 8885:8885 \
   -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
@@ -455,6 +456,7 @@ docker rm -f purethink_bridge 2>/dev/null || true
 docker run -d \
   --name purethink_bridge \
   --restart unless-stopped \
+  -e TZ=Asia/Seoul \
   -p 8885:8885 \
   -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
@@ -609,6 +611,7 @@ docker rm -f purethink_bridge
 docker run -d \
   --name purethink_bridge \
   --restart unless-stopped \
+  -e TZ=Asia/Seoul \
   -p 8885:8885 \
   -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
