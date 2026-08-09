@@ -14,6 +14,7 @@ const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const HTTP_PORT = Number(process.env.HTTP_PORT || 33301);
 const DEVICE_MQTT_PORT = Number(process.env.DEVICE_MQTT_PORT || 8885);
 const DEVICE_MQTT_HOST = process.env.DEVICE_MQTT_HOST || '0.0.0.0';
+const DEVICE_MQTT_DISPLAY_HOST = process.env.DEVICE_MQTT_DISPLAY_HOST || DEVICE_MQTT_HOST;
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const CERT_DIR = path.join(DATA_DIR, 'certs');
 const DISPLAY_TIME_ZONE = process.env.TZ || 'Asia/Seoul';
@@ -78,7 +79,7 @@ const state = {
     tx: 0
   },
   bridge: {
-    host: `${DEVICE_MQTT_HOST}:${DEVICE_MQTT_PORT}`,
+    host: `${DEVICE_MQTT_DISPLAY_HOST}:${DEVICE_MQTT_PORT}`,
     rx: 0,
     tx: 0,
     droppedLoopMessages: 0,

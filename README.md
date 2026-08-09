@@ -417,6 +417,7 @@ docker run -d \
   --name purethink_bridge \
   --restart unless-stopped \
   -e TZ=Asia/Seoul \
+  -e DEVICE_MQTT_DISPLAY_HOST=192.168.0.4 \
   -p 8885:8885 \
   -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
@@ -457,6 +458,7 @@ docker run -d \
   --name purethink_bridge \
   --restart unless-stopped \
   -e TZ=Asia/Seoul \
+  -e DEVICE_MQTT_DISPLAY_HOST=192.168.0.4 \
   -p 8885:8885 \
   -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
@@ -612,6 +614,7 @@ docker run -d \
   --name purethink_bridge \
   --restart unless-stopped \
   -e TZ=Asia/Seoul \
+  -e DEVICE_MQTT_DISPLAY_HOST=192.168.0.4 \
   -p 8885:8885 \
   -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
