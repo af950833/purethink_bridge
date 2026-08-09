@@ -77,7 +77,9 @@ async function loadStatus() {
   setText('internalCounts', counts(state.internal));
 
   setStatus('localControl', state.device.status === 'connected' && state.internal.status === 'connected' ? 'available' : 'limited');
+  setText('bridgeHost', state.bridge.host);
   setTime('startedAt', state.startedAt);
+  setText('bridgeCounts', counts(state.bridge));
   setText('droppedLoops', String(state.bridge.droppedLoopMessages || 0));
   setText('bridgeError', state.bridge.lastError);
   renderMessages(state.bridge.messages || []);

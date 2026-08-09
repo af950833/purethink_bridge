@@ -13,6 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const HTTP_PORT = Number(process.env.HTTP_PORT || 33301);
 const DEVICE_MQTT_PORT = Number(process.env.DEVICE_MQTT_PORT || 8885);
+const DEVICE_MQTT_HOST = process.env.DEVICE_MQTT_HOST || '0.0.0.0';
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const CERT_DIR = path.join(DATA_DIR, 'certs');
 const DISPLAY_TIME_ZONE = process.env.TZ || 'Asia/Seoul';
@@ -77,6 +78,9 @@ const state = {
     tx: 0
   },
   bridge: {
+    host: `${DEVICE_MQTT_HOST}:${DEVICE_MQTT_PORT}`,
+    rx: 0,
+    tx: 0,
     droppedLoopMessages: 0,
     lastError: null,
     messageSeq: 0,
@@ -199,6 +203,7 @@ function publishToDevice(topic, payload) {
       return;
     }
     state.device.tx += 1;
+    state.bridge.tx += 1;
   });
 }
 
@@ -365,6 +370,7 @@ aedes.on('publish', (packet, client) => {
   state.device.lastSeen = displayTime();
   state.device.lastTopic = packet.topic;
   state.device.rx += 1;
+  state.bridge.rx += 1;
   recordMessage('from-device', packet.topic, packet.payload);
   publishToManufacturer(packet.topic, packet.payload);
   publishToInternal(packet.topic, packet.payload);
@@ -372,8 +378,8 @@ aedes.on('publish', (packet, client) => {
 
 const tlsOptions = ensureCertificate();
 const mqttServer = tls.createServer(tlsOptions, aedes.handle);
-mqttServer.listen(DEVICE_MQTT_PORT, '0.0.0.0', () => {
-  console.log(`Device MQTT/TLS listening on 0.0.0.0:${DEVICE_MQTT_PORT}`);
+mqttServer.listen(DEVICE_MQTT_PORT, DEVICE_MQTT_HOST, () => {
+  console.log(`Device MQTT/TLS listening on ${DEVICE_MQTT_HOST}:${DEVICE_MQTT_PORT}`);
 });
 
 connectManufacturer();
