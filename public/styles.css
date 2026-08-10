@@ -226,11 +226,18 @@ label {
 }
 
 .checkbox-field {
-  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  align-self: end;
+  min-height: 38px;
+  border: 1px solid #cbd6d9;
+  border-radius: 6px;
+  padding: 0 10px;
 }
 
 .checkbox-field input {
-  align-self: start;
+  margin: 0;
 }
 
 input {

@@ -69,10 +69,6 @@
         <section class="settings">
           <h2>Internal MQTT Settings</h2>
           <form id="configForm" class="internal-form">
-            <label class="checkbox-field">
-              <span>Enabled</span>
-              <input id="enabled" type="checkbox">
-            </label>
             <label>
               <span>Host</span>
               <input id="host" name="host" placeholder="192.168.0.4">
@@ -96,6 +92,10 @@
             <label>
               <span>Subscribe Topic</span>
               <input id="topic" name="topic" value="/things/#">
+            </label>
+            <label class="checkbox-field">
+              <span>Enabled</span>
+              <input id="enabled" type="checkbox">
             </label>
             <button type="submit">Save</button>
           </form>
