@@ -36,6 +36,18 @@ h2 {
   margin-bottom: 12px;
 }
 
+.settings-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.settings-title h2 {
+  margin-bottom: 0;
+}
+
 button {
   border: 0;
   border-radius: 6px;
@@ -228,12 +240,11 @@ label {
 .checkbox-field {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  align-self: end;
-  min-height: 38px;
-  border: 1px solid #cbd6d9;
-  border-radius: 6px;
-  padding: 0 10px;
+  justify-content: flex-end;
+  gap: 8px;
+  align-self: start;
+  min-height: 18px;
+  padding: 0;
 }
 
 .checkbox-field input {

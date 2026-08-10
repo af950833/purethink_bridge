@@ -67,7 +67,13 @@
 
       <section class="settings-grid">
         <section class="settings">
-          <h2>Internal MQTT Settings</h2>
+          <div class="settings-title">
+            <h2>Internal MQTT Settings</h2>
+            <label class="checkbox-field">
+              <span>Enabled</span>
+              <input id="enabled" type="checkbox">
+            </label>
+          </div>
           <form id="configForm" class="internal-form">
             <label>
               <span>Host</span>
@@ -92,10 +98,6 @@
             <label>
               <span>Subscribe Topic</span>
               <input id="topic" name="topic" value="/things/#">
-            </label>
-            <label class="checkbox-field">
-              <span>Enabled</span>
-              <input id="enabled" type="checkbox">
             </label>
             <button type="submit">Save</button>
           </form>
