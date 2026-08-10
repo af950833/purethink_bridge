@@ -56,7 +56,6 @@ function renderDnat(dnat) {
   setTime('dnatChecked', dnat?.lastChecked);
   setText('dnatAction', dnat?.lastAction);
   setText('dnatError', dnat?.lastError);
-  $('dnatOutput').textContent = dnat?.output || '-';
 }
 
 async function loadStatus() {
