@@ -226,7 +226,7 @@ form {
 }
 
 .internal-form > button {
-  justify-self: end;
+  justify-self: start;
   width: calc(50% - 5px);
   min-width: 92px;
   padding: 8px 10px;
