@@ -214,9 +214,12 @@ label {
   color: #526167;
 }
 
+.checkbox-field {
+  align-self: stretch;
+}
+
 .checkbox-field input {
-  align-self: end;
-  margin-bottom: 8px;
+  align-self: start;
 }
 
 input {
