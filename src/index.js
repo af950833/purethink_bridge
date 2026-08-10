@@ -19,6 +19,7 @@ const DEVICE_MQTT_DISPLAY_HOST = process.env.DEVICE_MQTT_DISPLAY_HOST || DEVICE_
 const CONFIG_PATH = path.join(DATA_DIR, 'config.json');
 const CERT_DIR = path.join(DATA_DIR, 'certs');
 const DISPLAY_TIME_ZONE = process.env.TZ || 'Asia/Seoul';
+const DNAT_CHAIN = 'PURETHINK_DNAT';
 
 const MANUFACTURER = {
   host: 'dapt.iptime.org',
@@ -171,12 +172,10 @@ function validateDnatConfig(dnat) {
 
 function dnatRuleArgs(dnat) {
   const mqttPort = Number(dnat.mqttPort);
-  const subnet24 = `${dnat.deviceIp.split('.').slice(0, 3).join('.')}.0/24`;
   return {
+    jump: `-j ${DNAT_CHAIN}`,
     prerouting: `-s ${dnat.deviceIp}/32 -d ${dnat.manufacturerIp}/32 -p tcp -m tcp --dport ${mqttPort} -j DNAT --to-destination ${dnat.bridgeIp}:${mqttPort}`,
-    preroutingAnyDestination: `-s ${dnat.deviceIp}/32 -p tcp -m tcp --dport ${mqttPort} -j DNAT --to-destination ${dnat.bridgeIp}:${mqttPort}`,
-    postrouting: `-s ${dnat.deviceIp}/32 -d ${dnat.bridgeIp}/32 -p tcp -m tcp --dport ${mqttPort} -j MASQUERADE`,
-    postroutingSubnet: `-s ${subnet24} -d ${subnet24}`
+    preroutingAnyDestination: `-s ${dnat.deviceIp}/32 -p tcp -m tcp --dport ${mqttPort} -j DNAT --to-destination ${dnat.bridgeIp}:${mqttPort}`
   };
 }
 
@@ -185,15 +184,17 @@ function routerScript(action, dnat) {
   if (action === 'status') {
     return [
       'set -e',
-      `if iptables -t nat -S PREROUTING | grep -F -- '${rules.prerouting}' >/dev/null || iptables -t nat -S PREROUTING | grep -F -- '${rules.preroutingAnyDestination}' >/dev/null; then echo PREROUTING=present; else echo PREROUTING=missing; fi`,
-      `if iptables -t nat -S POSTROUTING | grep -F -- '${rules.postrouting}' >/dev/null || iptables -t nat -S POSTROUTING | grep -F -- '${rules.postroutingSubnet}' | grep -F -- '-j MASQUERADE' >/dev/null; then echo POSTROUTING=present; else echo POSTROUTING=missing; fi`
+      `if iptables -t nat -S ${DNAT_CHAIN} >/dev/null 2>&1; then echo CHAIN=present; else echo CHAIN=missing; fi`,
+      `if iptables -t nat -S PREROUTING | grep -F -- '${rules.jump}' >/dev/null; then echo JUMP=present; else echo JUMP=missing; fi`,
+      `if iptables -t nat -S ${DNAT_CHAIN} 2>/dev/null | grep -F -- '${rules.preroutingAnyDestination}' >/dev/null || iptables -t nat -S PREROUTING | grep -F -- '${rules.preroutingAnyDestination}' >/dev/null; then echo DNAT=present; else echo DNAT=missing; fi`
     ].join('\n');
   }
   if (action === 'apply') {
     return [
       'set -e',
-      `iptables -t nat -S PREROUTING | grep -F -- '${rules.prerouting}' >/dev/null || iptables -t nat -S PREROUTING | grep -F -- '${rules.preroutingAnyDestination}' >/dev/null || iptables -t nat -I PREROUTING 1 ${rules.prerouting}`,
-      `iptables -t nat -S POSTROUTING | grep -F -- '${rules.postrouting}' >/dev/null || iptables -t nat -S POSTROUTING | grep -F -- '${rules.postroutingSubnet}' | grep -F -- '-j MASQUERADE' >/dev/null || iptables -t nat -I POSTROUTING 1 ${rules.postrouting}`,
+      `iptables -t nat -N ${DNAT_CHAIN} 2>/dev/null || true`,
+      `iptables -t nat -S PREROUTING | grep -F -- '${rules.jump}' >/dev/null || iptables -t nat -I PREROUTING 1 ${rules.jump}`,
+      `iptables -t nat -S ${DNAT_CHAIN} | grep -F -- '${rules.preroutingAnyDestination}' >/dev/null || iptables -t nat -A ${DNAT_CHAIN} ${rules.preroutingAnyDestination}`,
       `conntrack -D -s ${dnat.deviceIp} -p tcp --dport ${Number(dnat.mqttPort)} 2>/dev/null || true`,
       'echo DNAT=applied'
     ].join('\n');
@@ -203,7 +204,10 @@ function routerScript(action, dnat) {
       'set -e',
       `while iptables -t nat -D PREROUTING ${rules.prerouting} 2>/dev/null; do :; done`,
       `while iptables -t nat -D PREROUTING ${rules.preroutingAnyDestination} 2>/dev/null; do :; done`,
-      `while iptables -t nat -D POSTROUTING ${rules.postrouting} 2>/dev/null; do :; done`,
+      `while iptables -t nat -D ${DNAT_CHAIN} ${rules.preroutingAnyDestination} 2>/dev/null; do :; done`,
+      `while iptables -t nat -D PREROUTING ${rules.jump} 2>/dev/null; do :; done`,
+      `iptables -t nat -F ${DNAT_CHAIN} 2>/dev/null || true`,
+      `iptables -t nat -X ${DNAT_CHAIN} 2>/dev/null || true`,
       `conntrack -D -s ${dnat.deviceIp} -p tcp --dport ${Number(dnat.mqttPort)} 2>/dev/null || true`,
       'echo DNAT=removed'
     ].join('\n');
@@ -267,7 +271,7 @@ function updateDnatState(action, output, err = null) {
   state.bridge.dnat.output = output || '';
   if (err) {
     state.bridge.dnat.status = 'error';
-  } else if (output.includes('PREROUTING=present') && output.includes('POSTROUTING=present')) {
+  } else if (output.includes('CHAIN=present') && output.includes('JUMP=present') && output.includes('DNAT=present')) {
     state.bridge.dnat.status = 'active';
   } else if (output.includes('DNAT=applied')) {
     state.bridge.dnat.status = 'active';
