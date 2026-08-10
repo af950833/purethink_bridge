@@ -126,6 +126,17 @@ dd {
   margin-top: 16px;
 }
 
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.settings-grid .settings {
+  margin-top: 0;
+}
+
 .payloads {
   margin-top: 16px;
 }
@@ -198,13 +209,13 @@ form {
 }
 
 .internal-form {
-  grid-template-columns: 74px repeat(6, minmax(96px, 1fr)) 120px;
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
 }
 
 .dnat-form {
-  grid-template-columns: repeat(5, minmax(120px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 12px;
 }
 
 label {
@@ -237,7 +248,7 @@ input[type="checkbox"] {
 
 .button-row {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   grid-column: 1 / -1;
 }
@@ -252,6 +263,10 @@ input[type="checkbox"] {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+
 }
 
 @media (max-width: 620px) {
@@ -264,7 +279,7 @@ input[type="checkbox"] {
     flex-direction: column;
   }
 
-  .status-grid, form, .internal-form, .dnat-form {
+  .status-grid, .settings-grid, form, .internal-form, .dnat-form {
     grid-template-columns: 1fr;
   }
 
