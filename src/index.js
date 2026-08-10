@@ -194,7 +194,7 @@ function routerScript(action, dnat) {
       'set -e',
       `iptables -t nat -S PREROUTING | grep -F -- '${rules.prerouting}' >/dev/null || iptables -t nat -S PREROUTING | grep -F -- '${rules.preroutingAnyDestination}' >/dev/null || iptables -t nat -I PREROUTING 1 ${rules.prerouting}`,
       `iptables -t nat -S POSTROUTING | grep -F -- '${rules.postrouting}' >/dev/null || iptables -t nat -S POSTROUTING | grep -F -- '${rules.postroutingSubnet}' | grep -F -- '-j MASQUERADE' >/dev/null || iptables -t nat -I POSTROUTING 1 ${rules.postrouting}`,
-      `conntrack -D -s ${dnat.deviceIp} -d ${dnat.manufacturerIp} -p tcp --dport ${Number(dnat.mqttPort)} 2>/dev/null || true`,
+      `conntrack -D -s ${dnat.deviceIp} -p tcp --dport ${Number(dnat.mqttPort)} 2>/dev/null || true`,
       'echo DNAT=applied'
     ].join('\n');
   }
@@ -204,7 +204,7 @@ function routerScript(action, dnat) {
       `while iptables -t nat -D PREROUTING ${rules.prerouting} 2>/dev/null; do :; done`,
       `while iptables -t nat -D PREROUTING ${rules.preroutingAnyDestination} 2>/dev/null; do :; done`,
       `while iptables -t nat -D POSTROUTING ${rules.postrouting} 2>/dev/null; do :; done`,
-      `conntrack -D -s ${dnat.deviceIp} -d ${dnat.manufacturerIp} -p tcp --dport ${Number(dnat.mqttPort)} 2>/dev/null || true`,
+      `conntrack -D -s ${dnat.deviceIp} -p tcp --dport ${Number(dnat.mqttPort)} 2>/dev/null || true`,
       'echo DNAT=removed'
     ].join('\n');
   }
