@@ -101,10 +101,10 @@
       </section>
 
       <section class="settings">
-        <h2>Router DNAT Settings</h2>
+        <h2>ASUS Router DNAT Settings</h2>
         <form id="dnatForm">
           <label>
-            <span>Router Host</span>
+            <span>Router IP</span>
             <input id="routerHost" name="routerHost" placeholder="192.168.0.1">
           </label>
           <label>
@@ -120,21 +120,12 @@
             <input id="routerPassword" name="routerPassword" type="password" autocomplete="current-password" placeholder="unchanged">
           </label>
           <label>
-            <span>Device IP</span>
+            <span>Purethink IP</span>
             <input id="dnatDeviceIp" name="dnatDeviceIp" placeholder="192.168.0.67">
           </label>
-          <label>
-            <span>Manufacturer IP</span>
-            <input id="dnatManufacturerIp" name="dnatManufacturerIp" placeholder="221.149.135.231">
-          </label>
-          <label>
-            <span>Bridge IP</span>
-            <input id="dnatBridgeIp" name="dnatBridgeIp" placeholder="192.168.0.4">
-          </label>
-          <label>
-            <span>MQTT Port</span>
-            <input id="dnatMqttPort" name="dnatMqttPort" type="number" min="1" max="65535" value="8885">
-          </label>
+          <input id="dnatManufacturerIp" name="dnatManufacturerIp" type="hidden" value="221.149.135.231">
+          <input id="dnatBridgeIp" name="dnatBridgeIp" type="hidden" value="192.168.0.4">
+          <input id="dnatMqttPort" name="dnatMqttPort" type="hidden" value="8885">
           <div class="button-row">
             <button type="submit">Save</button>
             <button id="checkDnat" type="button">Check DNAT</button>

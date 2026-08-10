@@ -111,7 +111,7 @@ async function loadConfig() {
   $('routerPassword').value = '';
   $('dnatDeviceIp').value = cfg.routerDnat.deviceIp || '';
   $('dnatManufacturerIp').value = cfg.routerDnat.manufacturerIp || '221.149.135.231';
-  $('dnatBridgeIp').value = cfg.routerDnat.bridgeIp || '';
+  $('dnatBridgeIp').value = cfg.routerDnat.bridgeIp || window.location.hostname || '192.168.0.4';
   $('dnatMqttPort').value = cfg.routerDnat.mqttPort || 8885;
 }
 
