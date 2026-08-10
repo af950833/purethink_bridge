@@ -51,6 +51,14 @@ function renderMessages(messages) {
   stream.scrollTop = 0;
 }
 
+function renderDnat(dnat) {
+  setStatus('dnatStatus', dnat?.status || 'unknown');
+  setTime('dnatChecked', dnat?.lastChecked);
+  setText('dnatAction', dnat?.lastAction);
+  setText('dnatError', dnat?.lastError);
+  $('dnatOutput').textContent = dnat?.output || '-';
+}
+
 async function loadStatus() {
   const res = await fetch('/api/status');
   const data = await res.json();
@@ -82,6 +90,7 @@ async function loadStatus() {
   setText('bridgeCounts', counts(state.bridge));
   setText('droppedLoops', String(state.bridge.droppedLoopMessages || 0));
   setText('bridgeError', state.bridge.lastError);
+  renderDnat(state.bridge.dnat);
   renderMessages(state.bridge.messages || []);
 }
 
@@ -95,6 +104,15 @@ async function loadConfig() {
   $('password').value = '';
   $('clientId').value = cfg.internalMqtt.clientId || 'purethink-bridge';
   $('topic').value = cfg.internalMqtt.topic || '/things/#';
+
+  $('routerHost').value = cfg.routerDnat.host || '';
+  $('routerPort').value = cfg.routerDnat.port || 22;
+  $('routerUsername').value = cfg.routerDnat.username || '';
+  $('routerPassword').value = '';
+  $('dnatDeviceIp').value = cfg.routerDnat.deviceIp || '';
+  $('dnatManufacturerIp').value = cfg.routerDnat.manufacturerIp || '221.149.135.231';
+  $('dnatBridgeIp').value = cfg.routerDnat.bridgeIp || '';
+  $('dnatMqttPort').value = cfg.routerDnat.mqttPort || 8885;
 }
 
 async function saveConfig(event) {
@@ -118,15 +136,55 @@ async function saveConfig(event) {
   await loadStatus();
 }
 
+async function saveDnatConfig(event) {
+  event.preventDefault();
+  const body = {
+    routerDnat: {
+      host: $('routerHost').value.trim(),
+      port: Number($('routerPort').value || 22),
+      username: $('routerUsername').value.trim(),
+      password: $('routerPassword').value,
+      deviceIp: $('dnatDeviceIp').value.trim(),
+      manufacturerIp: $('dnatManufacturerIp').value.trim(),
+      bridgeIp: $('dnatBridgeIp').value.trim(),
+      mqttPort: Number($('dnatMqttPort').value || 8885)
+    }
+  };
+  await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  $('routerPassword').value = '';
+  await loadStatus();
+}
+
 async function post(path) {
   await fetch(path, { method: 'POST' });
   await loadStatus();
 }
 
+async function dnatAction(action) {
+  const buttons = [$('checkDnat'), $('applyDnat'), $('removeDnat')];
+  buttons.forEach((button) => { button.disabled = true; });
+  try {
+    const res = await fetch(`/api/router-dnat/${action}`, { method: 'POST' });
+    const data = await res.json();
+    renderDnat(data.state);
+  } finally {
+    buttons.forEach((button) => { button.disabled = false; });
+    await loadStatus();
+  }
+}
+
 $('refresh').addEventListener('click', loadStatus);
 $('configForm').addEventListener('submit', saveConfig);
+$('dnatForm').addEventListener('submit', saveDnatConfig);
 $('reconnectManufacturer').addEventListener('click', () => post('/api/reconnect/manufacturer'));
 $('reconnectInternal').addEventListener('click', () => post('/api/reconnect/internal'));
+$('checkDnat').addEventListener('click', () => dnatAction('status'));
+$('applyDnat').addEventListener('click', () => dnatAction('apply'));
+$('removeDnat').addEventListener('click', () => dnatAction('remove'));
 $('clearPayloads').addEventListener('click', async () => {
   const res = await fetch('/api/status');
   const data = await res.json();

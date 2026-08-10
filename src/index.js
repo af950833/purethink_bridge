@@ -7,6 +7,7 @@ import Aedes from 'aedes';
 import express from 'express';
 import mqtt from 'mqtt';
 import selfsigned from 'selfsigned';
+import { Client as SshClient } from 'ssh2';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,6 +36,16 @@ const DEFAULT_CONFIG = {
     password: '',
     clientId: 'purethink-bridge',
     topic: '/things/#'
+  },
+  routerDnat: {
+    host: '192.168.0.1',
+    port: 22,
+    username: '',
+    password: '',
+    deviceIp: '',
+    manufacturerIp: '221.149.135.231',
+    bridgeIp: DEVICE_MQTT_DISPLAY_HOST === '0.0.0.0' ? '' : DEVICE_MQTT_DISPLAY_HOST,
+    mqttPort: DEVICE_MQTT_PORT
   }
 };
 
@@ -85,7 +96,14 @@ const state = {
     droppedLoopMessages: 0,
     lastError: null,
     messageSeq: 0,
-    messages: []
+    messages: [],
+    dnat: {
+      status: 'unknown',
+      lastChecked: null,
+      lastAction: null,
+      lastError: null,
+      output: ''
+    }
   }
 };
 
@@ -108,13 +126,154 @@ function loadConfig() {
   return {
     ...DEFAULT_CONFIG,
     ...loaded,
-    internalMqtt: { ...DEFAULT_CONFIG.internalMqtt, ...(loaded.internalMqtt || {}) }
+    internalMqtt: { ...DEFAULT_CONFIG.internalMqtt, ...(loaded.internalMqtt || {}) },
+    routerDnat: { ...DEFAULT_CONFIG.routerDnat, ...(loaded.routerDnat || {}) }
   };
 }
 
 function saveConfig(nextConfig) {
   ensureDir(DATA_DIR);
   fs.writeFileSync(CONFIG_PATH, JSON.stringify(nextConfig, null, 2));
+}
+
+function validIPv4(value) {
+  if (typeof value !== 'string') return false;
+  const parts = value.trim().split('.');
+  return parts.length === 4 && parts.every((part) => {
+    if (!/^\d{1,3}$/.test(part)) return false;
+    const num = Number(part);
+    return num >= 0 && num <= 255 && String(num) === String(Number(part));
+  });
+}
+
+function validPort(value) {
+  const port = Number(value);
+  return Number.isInteger(port) && port > 0 && port <= 65535;
+}
+
+function validateDnatConfig(dnat) {
+  const required = [
+    ['router host', dnat.host],
+    ['device IP', dnat.deviceIp],
+    ['manufacturer IP', dnat.manufacturerIp],
+    ['bridge IP', dnat.bridgeIp]
+  ];
+  for (const [label, value] of required) {
+    if (!validIPv4(value)) {
+      throw new Error(`Invalid ${label}`);
+    }
+  }
+  if (!validPort(dnat.port)) throw new Error('Invalid router SSH port');
+  if (!validPort(dnat.mqttPort)) throw new Error('Invalid MQTT port');
+  if (!dnat.username) throw new Error('Router username is empty');
+  if (!dnat.password) throw new Error('Router password is empty');
+}
+
+function dnatRuleArgs(dnat) {
+  const mqttPort = Number(dnat.mqttPort);
+  return {
+    prerouting: `-s ${dnat.deviceIp}/32 -d ${dnat.manufacturerIp}/32 -p tcp -m tcp --dport ${mqttPort} -j DNAT --to-destination ${dnat.bridgeIp}:${mqttPort}`,
+    postrouting: `-s ${dnat.deviceIp}/32 -d ${dnat.bridgeIp}/32 -p tcp -m tcp --dport ${mqttPort} -j MASQUERADE`
+  };
+}
+
+function routerScript(action, dnat) {
+  const rules = dnatRuleArgs(dnat);
+  if (action === 'status') {
+    return [
+      'set -e',
+      `iptables -t nat -S PREROUTING | grep -F -- '${rules.prerouting}' >/dev/null && echo PREROUTING=present || echo PREROUTING=missing`,
+      `iptables -t nat -S POSTROUTING | grep -F -- '${rules.postrouting}' >/dev/null && echo POSTROUTING=present || echo POSTROUTING=missing`
+    ].join('\n');
+  }
+  if (action === 'apply') {
+    return [
+      'set -e',
+      `iptables -t nat -S PREROUTING | grep -F -- '${rules.prerouting}' >/dev/null || iptables -t nat -I PREROUTING 1 ${rules.prerouting}`,
+      `iptables -t nat -S POSTROUTING | grep -F -- '${rules.postrouting}' >/dev/null || iptables -t nat -I POSTROUTING 1 ${rules.postrouting}`,
+      `conntrack -D -s ${dnat.deviceIp} -d ${dnat.manufacturerIp} -p tcp --dport ${Number(dnat.mqttPort)} 2>/dev/null || true`,
+      'echo DNAT=applied'
+    ].join('\n');
+  }
+  if (action === 'remove') {
+    return [
+      'set -e',
+      `while iptables -t nat -D PREROUTING ${rules.prerouting} 2>/dev/null; do :; done`,
+      `while iptables -t nat -D POSTROUTING ${rules.postrouting} 2>/dev/null; do :; done`,
+      `conntrack -D -s ${dnat.deviceIp} -d ${dnat.manufacturerIp} -p tcp --dport ${Number(dnat.mqttPort)} 2>/dev/null || true`,
+      'echo DNAT=removed'
+    ].join('\n');
+  }
+  throw new Error('Unknown DNAT action');
+}
+
+function runRouterCommand(action) {
+  const dnat = config.routerDnat;
+  validateDnatConfig(dnat);
+  const script = routerScript(action, dnat);
+  return new Promise((resolve, reject) => {
+    const client = new SshClient();
+    let output = '';
+    let settled = false;
+
+    const finish = (err, result) => {
+      if (settled) return;
+      settled = true;
+      client.end();
+      if (err) reject(err);
+      else resolve(result);
+    };
+
+    client.on('ready', () => {
+      client.exec(script, (err, stream) => {
+        if (err) {
+          finish(err);
+          return;
+        }
+        stream.on('close', (code) => {
+          if (code === 0) {
+            finish(null, output.trim());
+            return;
+          }
+          finish(new Error(output.trim() || `Router command failed with exit code ${code}`));
+        });
+        stream.on('data', (data) => {
+          output += data.toString();
+        });
+        stream.stderr.on('data', (data) => {
+          output += data.toString();
+        });
+      });
+    });
+    client.on('error', (err) => finish(err));
+    client.connect({
+      host: dnat.host,
+      port: Number(dnat.port || 22),
+      username: dnat.username,
+      password: dnat.password,
+      readyTimeout: 10000
+    });
+  });
+}
+
+function updateDnatState(action, output, err = null) {
+  state.bridge.dnat.lastChecked = displayTime();
+  state.bridge.dnat.lastAction = action;
+  state.bridge.dnat.lastError = err ? err.message : null;
+  state.bridge.dnat.output = output || '';
+  if (err) {
+    state.bridge.dnat.status = 'error';
+  } else if (output.includes('PREROUTING=present') && output.includes('POSTROUTING=present')) {
+    state.bridge.dnat.status = 'active';
+  } else if (output.includes('DNAT=applied')) {
+    state.bridge.dnat.status = 'active';
+  } else if (output.includes('DNAT=removed')) {
+    state.bridge.dnat.status = 'inactive';
+  } else if (output.includes('missing')) {
+    state.bridge.dnat.status = 'inactive';
+  } else {
+    state.bridge.dnat.status = 'unknown';
+  }
 }
 
 function ensureCertificate() {
@@ -397,6 +556,10 @@ app.get('/api/status', (_req, res) => {
       internalMqtt: {
         ...config.internalMqtt,
         password: config.internalMqtt.password ? '********' : ''
+      },
+      routerDnat: {
+        ...config.routerDnat,
+        password: config.routerDnat.password ? '********' : ''
       }
     }
   });
@@ -407,6 +570,10 @@ app.get('/api/config', (_req, res) => {
     ...config,
     internalMqtt: {
       ...config.internalMqtt,
+      password: ''
+    },
+    routerDnat: {
+      ...config.routerDnat,
       password: ''
     }
   });
@@ -423,9 +590,18 @@ app.post('/api/config', (req, res) => {
   if (!req.body.internalMqtt?.password && config.internalMqtt.password) {
     next.internalMqtt.password = config.internalMqtt.password;
   }
+  if (req.body.routerDnat) {
+    next.routerDnat = {
+      ...config.routerDnat,
+      ...req.body.routerDnat
+    };
+    if (!req.body.routerDnat.password && config.routerDnat.password) {
+      next.routerDnat.password = config.routerDnat.password;
+    }
+  }
   config = next;
   saveConfig(config);
-  connectInternal();
+  if (req.body.internalMqtt) connectInternal();
   res.json({ ok: true });
 });
 
@@ -438,6 +614,20 @@ app.post('/api/reconnect/internal', (_req, res) => {
   connectInternal();
   res.json({ ok: true });
 });
+
+async function handleDnatAction(req, res) {
+  const action = req.params.action;
+  try {
+    const output = await runRouterCommand(action);
+    updateDnatState(action, output);
+    res.json({ ok: true, output, state: state.bridge.dnat });
+  } catch (err) {
+    updateDnatState(action, '', err);
+    res.status(400).json({ ok: false, error: err.message, state: state.bridge.dnat });
+  }
+}
+
+app.post('/api/router-dnat/:action(status|apply|remove)', handleDnatAction);
 
 app.listen(HTTP_PORT, '0.0.0.0', () => {
   console.log(`Dashboard listening on 0.0.0.0:${HTTP_PORT}`);

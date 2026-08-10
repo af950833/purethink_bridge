@@ -100,6 +100,57 @@
         </form>
       </section>
 
+      <section class="settings">
+        <h2>Router DNAT Settings</h2>
+        <form id="dnatForm">
+          <label>
+            <span>Router Host</span>
+            <input id="routerHost" name="routerHost" placeholder="192.168.0.1">
+          </label>
+          <label>
+            <span>SSH Port</span>
+            <input id="routerPort" name="routerPort" type="number" min="1" max="65535" value="22">
+          </label>
+          <label>
+            <span>Username</span>
+            <input id="routerUsername" name="routerUsername" autocomplete="username">
+          </label>
+          <label>
+            <span>Password</span>
+            <input id="routerPassword" name="routerPassword" type="password" autocomplete="current-password" placeholder="unchanged">
+          </label>
+          <label>
+            <span>Device IP</span>
+            <input id="dnatDeviceIp" name="dnatDeviceIp" placeholder="192.168.0.67">
+          </label>
+          <label>
+            <span>Manufacturer IP</span>
+            <input id="dnatManufacturerIp" name="dnatManufacturerIp" placeholder="221.149.135.231">
+          </label>
+          <label>
+            <span>Bridge IP</span>
+            <input id="dnatBridgeIp" name="dnatBridgeIp" placeholder="192.168.0.4">
+          </label>
+          <label>
+            <span>MQTT Port</span>
+            <input id="dnatMqttPort" name="dnatMqttPort" type="number" min="1" max="65535" value="8885">
+          </label>
+          <div class="button-row">
+            <button type="submit">Save</button>
+            <button id="checkDnat" type="button">Check DNAT</button>
+            <button id="applyDnat" type="button">Apply DNAT</button>
+            <button id="removeDnat" class="danger" type="button">Remove DNAT</button>
+          </div>
+        </form>
+        <dl class="dnat-status">
+          <dt>Status</dt><dd id="dnatStatus">-</dd>
+          <dt>Last Checked</dt><dd id="dnatChecked">-</dd>
+          <dt>Last Action</dt><dd id="dnatAction">-</dd>
+          <dt>Last Error</dt><dd id="dnatError">-</dd>
+        </dl>
+        <pre id="dnatOutput" class="dnat-output">-</pre>
+      </section>
+
       <section class="payloads">
         <div class="section-title">
           <h2>Payload Stream</h2>
