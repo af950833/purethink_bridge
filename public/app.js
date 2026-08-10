@@ -17,6 +17,10 @@ function setTime(id, value) {
   el.classList.add('time');
 }
 
+function inlineTime(value) {
+  return String(value || '-').replace(/\s*\n\s*/g, ' ');
+}
+
 function counts(obj) {
   return `${obj.rx || 0} / ${obj.tx || 0}`;
 }
@@ -53,7 +57,7 @@ function renderMessages(messages) {
 
 function renderDnat(dnat) {
   setStatus('dnatStatus', dnat?.status || 'unknown');
-  setTime('dnatChecked', dnat?.lastChecked);
+  setText('dnatChecked', inlineTime(dnat?.lastChecked));
   setText('dnatAction', dnat?.lastAction);
   setText('dnatError', dnat?.lastError);
 }
