@@ -284,8 +284,15 @@ input[type="checkbox"] {
   white-space: nowrap;
 }
 
-.dnat-status {
+.dnat-status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
   margin-top: 14px;
+}
+
+.dnat-status {
+  margin-top: 0;
   margin-bottom: 0;
 }
 
@@ -316,6 +323,10 @@ input[type="checkbox"] {
 
   .button-row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dnat-status-grid {
+    grid-template-columns: 1fr;
   }
 
   .internal-form > button {
