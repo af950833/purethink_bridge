@@ -176,7 +176,12 @@ async function dnatAction(action) {
   }
 }
 
-$('refresh').addEventListener('click', loadStatus);
+async function refreshDashboard() {
+  await loadStatus();
+  await dnatAction('status');
+}
+
+$('refresh').addEventListener('click', refreshDashboard);
 $('configForm').addEventListener('submit', saveConfig);
 $('dnatForm').addEventListener('submit', saveDnatConfig);
 $('reconnectManufacturer').addEventListener('click', () => post('/api/reconnect/manufacturer'));
@@ -192,5 +197,5 @@ $('clearPayloads').addEventListener('click', async () => {
   renderMessages([]);
 });
 
-loadConfig().then(loadStatus);
+loadConfig().then(refreshDashboard);
 setInterval(loadStatus, 3000);
