@@ -197,6 +197,16 @@ form {
   align-items: end;
 }
 
+.internal-form {
+  grid-template-columns: 74px repeat(6, minmax(96px, 1fr)) 120px;
+  gap: 10px;
+}
+
+.dnat-form {
+  grid-template-columns: repeat(5, minmax(120px, 1fr));
+  gap: 10px;
+}
+
 label {
   display: grid;
   gap: 6px;
@@ -243,7 +253,7 @@ input[type="checkbox"] {
 }
 
 @media (max-width: 920px) {
-  .status-grid, form {
+  .status-grid, form, .internal-form, .dnat-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -258,7 +268,7 @@ input[type="checkbox"] {
     flex-direction: column;
   }
 
-  .status-grid, form {
+  .status-grid, form, .internal-form, .dnat-form {
     grid-template-columns: 1fr;
   }
 
