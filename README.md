@@ -495,18 +495,74 @@ Device: offline
 
 이제 기기의 제조사 MQTT 접속을 브릿지 서버로 DNAT합니다.
 
-공유기 SSH에서 아래 명령을 그대로 실행합니다.
+### 대시보드에서 설정
+
+대시보드의 `ASUS Router DNAT Settings`에 아래 값을 입력합니다.
+
+```text
+Router IP: 공유기 IP
+SSH Port: 22
+Username: 공유기 SSH ID
+Password: 공유기 SSH PW
+Purethink IP: 퓨어싱크 기기 IP
+```
+
+예:
+
+```text
+Router IP: 192.168.0.1
+SSH Port: 22
+Purethink IP: 192.168.0.67
+```
+
+버튼은 아래 순서로 사용합니다.
+
+```text
+Save
+Check DNAT
+Apply DNAT
+Check DNAT
+```
+
+`Check DNAT` 결과가 `active`이면 정상입니다.
+
+대시보드는 아래 방식으로 공유기에 별도 NAT 체인을 생성합니다.
+
+```text
+PREROUTING -> PURETHINK_DNAT -> 브릿지 서버 8885
+```
+
+### 수동 설정
+
+대시보드를 사용하지 않고 공유기 SSH에서 직접 설정하려면 아래 명령을 실행합니다.
+
+아래 예시는:
+
+```text
+Purethink IP: 192.168.0.67
+Bridge IP: 192.168.0.4
+MQTT Port: 8885
+```
+
+기준입니다.
 
 ```bash
-iptables -t nat -I PREROUTING 1 -s 192.168.0.67 -p tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885
+iptables -t nat -N PURETHINK_DNAT 2>/dev/null || true
 
-conntrack -D -s 192.168.0.67 -p tcp --dport 8885
+iptables -t nat -S PREROUTING | grep -F -- '-j PURETHINK_DNAT' >/dev/null || iptables -t nat -I PREROUTING 1 -j PURETHINK_DNAT
+
+iptables -t nat -S PURETHINK_DNAT | grep -F -- '-s 192.168.0.67/32 -p tcp -m tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885' >/dev/null || iptables -t nat -A PURETHINK_DNAT -s 192.168.0.67/32 -p tcp -m tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885
+
+conntrack -D -s 192.168.0.67 -p tcp --dport 8885 2>/dev/null || true
 ```
+
+POSTROUTING은 별도로 추가하지 않습니다.
 
 규칙이 정상적으로 추가되었는지 확인합니다.
 
 ```bash
-iptables -t nat -L PREROUTING --line-numbers -n -v
+iptables -t nat -S PREROUTING | grep PURETHINK_DNAT
+iptables -t nat -S PURETHINK_DNAT
 ```
 
 대시보드에서 확인합니다.
@@ -523,18 +579,40 @@ payload stream에 `/things/<device-id>/shadow` 메시지가 표시되면 정상�
 
 브릿지 테스트를 중단하거나 제조사 서버 직접 연결로 되돌리고 싶으면 `8885` DNAT를 제거합니다.
 
-공유기 SSH에서 아래 명령을 그대로 실행합니다.
+### 대시보드에서 원복
+
+대시보드의 `ASUS Router DNAT Settings`에서 아래 순서로 실행합니다.
+
+```text
+Remove DNAT
+Check DNAT
+```
+
+`Check DNAT` 결과가 `inactive`이면 정상입니다.
+
+### 수동 원복
+
+공유기 SSH에서 직접 원복하려면 아래 명령을 실행합니다.
 
 ```bash
-iptables -t nat -D PREROUTING -s 192.168.0.67 -p tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885
+while iptables -t nat -D PURETHINK_DNAT -s 192.168.0.67/32 -p tcp -m tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885 2>/dev/null; do :; done
 
-conntrack -D -s 192.168.0.67 -p tcp --dport 8885
+while iptables -t nat -D PREROUTING -j PURETHINK_DNAT 2>/dev/null; do :; done
+
+iptables -t nat -F PURETHINK_DNAT 2>/dev/null || true
+
+iptables -t nat -X PURETHINK_DNAT 2>/dev/null || true
+
+iptables -t nat -D PREROUTING -s 192.168.0.67/32 -p tcp -m tcp --dport 8885 -j DNAT --to-destination 192.168.0.4:8885 2>/dev/null || true
+
+conntrack -D -s 192.168.0.67 -p tcp --dport 8885 2>/dev/null || true
 ```
 
 규칙이 삭제되었는지 확인합니다.
 
 ```bash
-iptables -t nat -L PREROUTING --line-numbers -n -v
+iptables -t nat -S PREROUTING | grep PURETHINK_DNAT || echo 'PREROUTING jump 없음'
+iptables -t nat -S PURETHINK_DNAT 2>/dev/null || echo 'PURETHINK_DNAT 체인 없음'
 ```
 
 기기가 제조사 서버로 다시 붙었는지 확인합니다.
@@ -597,8 +675,8 @@ ss -ltnp | grep -E ':8885|:33301'
 공유기 DNAT 확인:
 
 ```bash
-iptables -t nat -S PREROUTING | grep 8885
-iptables -t nat -S POSTROUTING | grep 8885
+iptables -t nat -S PREROUTING | grep PURETHINK_DNAT
+iptables -t nat -S PURETHINK_DNAT
 ```
 
 ## 13. 업데이트 방법
@@ -625,7 +703,8 @@ docker run -d \
 
 ### Device가 offline
 
-- 공유기 `8885` DNAT가 있는지 확인
+- 대시보드 `ASUS Router DNAT Settings`에서 `Check DNAT`가 `active`인지 확인
+- 공유기 `PURETHINK_DNAT` 체인에 기기 IP의 `8885` DNAT가 있는지 확인
 - 기기 IP가 맞는지 확인
 - 기기가 펌웨어 `1633`인지 확인
 - 브릿지 컨테이너가 `8885`를 listen 중인지 확인
