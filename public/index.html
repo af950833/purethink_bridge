@@ -68,7 +68,7 @@
       <section class="settings">
         <h2>Internal MQTT Settings</h2>
         <form id="configForm" class="internal-form">
-          <label>
+          <label class="checkbox-field">
             <span>Enabled</span>
             <input id="enabled" type="checkbox">
           </label>
@@ -133,13 +133,15 @@
             <button id="removeDnat" class="danger" type="button">Remove DNAT</button>
           </div>
         </form>
-        <dl class="dnat-status">
-          <dt>Status</dt><dd id="dnatStatus">-</dd>
-          <dt>Last Checked</dt><dd id="dnatChecked">-</dd>
-          <dt>Last Action</dt><dd id="dnatAction">-</dd>
-          <dt>Last Error</dt><dd id="dnatError">-</dd>
-        </dl>
-        <pre id="dnatOutput" class="dnat-output">-</pre>
+        <div class="dnat-result">
+          <dl class="dnat-status">
+            <dt>Status</dt><dd id="dnatStatus">-</dd>
+            <dt>Last Checked</dt><dd id="dnatChecked">-</dd>
+            <dt>Last Action</dt><dd id="dnatAction">-</dd>
+            <dt>Last Error</dt><dd id="dnatError">-</dd>
+          </dl>
+          <pre id="dnatOutput" class="dnat-output">-</pre>
+        </div>
       </section>
 
       <section class="payloads">

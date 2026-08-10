@@ -214,6 +214,11 @@ label {
   color: #526167;
 }
 
+.checkbox-field input {
+  align-self: end;
+  margin-bottom: 8px;
+}
+
 input {
   min-width: 0;
   border: 1px solid #cbd6d9;
@@ -235,13 +240,21 @@ input[type="checkbox"] {
 }
 
 .dnat-status {
-  margin-top: 14px;
+  margin-top: 0;
   margin-bottom: 0;
 }
 
+.dnat-result {
+  display: grid;
+  grid-template-columns: minmax(300px, 0.95fr) minmax(0, 1.35fr);
+  gap: 14px;
+  margin-top: 14px;
+  align-items: stretch;
+}
+
 .dnat-output {
-  margin-top: 12px;
-  min-height: 42px;
+  margin-top: 0;
+  min-height: 86px;
   max-height: 150px;
   overflow: auto;
   border: 1px solid #d5dee1;
@@ -255,6 +268,10 @@ input[type="checkbox"] {
 @media (max-width: 920px) {
   .status-grid, form, .internal-form, .dnat-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dnat-result {
+    grid-template-columns: 1fr;
   }
 }
 
