@@ -416,13 +416,16 @@ docker rm -f purethink_bridge 2>/dev/null || true
 docker run -d \
   --name purethink_bridge \
   --restart unless-stopped \
+  --network host \
   -e TZ=Asia/Seoul \
   -e DEVICE_MQTT_DISPLAY_HOST=192.168.0.4 \
-  -p 8885:8885 \
-  -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
   purethink_bridge:latest
 ```
+
+`--network host`를 사용하면 컨테이너가 우분투 서버의 네트워크를 그대로 사용합니다.
+따라서 `-p 8885:8885`, `-p 33301:33301` 포트 매핑은 넣지 않습니다.
+우분투 서버에서 `8885`, `33301` 포트를 이미 다른 서비스가 사용 중이면 컨테이너 실행이 실패할 수 있습니다.
 
 상태 확인:
 
@@ -457,10 +460,9 @@ docker rm -f purethink_bridge 2>/dev/null || true
 docker run -d \
   --name purethink_bridge \
   --restart unless-stopped \
+  --network host \
   -e TZ=Asia/Seoul \
   -e DEVICE_MQTT_DISPLAY_HOST=192.168.0.4 \
-  -p 8885:8885 \
-  -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
   ghcr.io/af950833/purethink_bridge:latest
 ```
@@ -691,10 +693,9 @@ docker rm -f purethink_bridge
 docker run -d \
   --name purethink_bridge \
   --restart unless-stopped \
+  --network host \
   -e TZ=Asia/Seoul \
   -e DEVICE_MQTT_DISPLAY_HOST=192.168.0.4 \
-  -p 8885:8885 \
-  -p 33301:33301 \
   -v /opt/purethink-bridge/data:/data \
   purethink_bridge:latest
 ```
